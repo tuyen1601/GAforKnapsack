@@ -1,0 +1,245 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<h2>GA for knapsack 0/1</h2>
+
+
+<div class="col-sm-12" style="display: flex;">
+    <div class="col-sm-4">
+        <form method="POST" id="create-data">
+            <label for="number_items">Number of objects: </label>
+            <input type="number" class="input-01" name="number_items" value="10">
+            <div>
+                <label for="max_weight">Max weight: </label>
+                <input type="number" class="input-02" name="max_weight" value="100">
+                <label for="min_weight">Min weight: </label>
+                <input type="number" class="input-02" name="min_weight" value="1">
+            </div>
+            <div>
+                <label for="max_value">Max value: </label>
+                <input type="number" class="input-02" name="max_value" value="750">
+                <label for="min_value">Min value: </label>
+                <input type="number" class="input-02" name="min_value" value="10">
+            </div>
+            
+            <input type="submit" value="Create data">
+        </form>
+        <h3 class="text-center">List Items</h3>
+        <div style="
+    position: relative;
+    height: 600px;
+    overflow: auto;
+">
+            <table class="table table-bordered table-striped" id="itemTable">
+                <tr>
+                    <th>ID</th>
+                    <th>Value</th>
+                    <th>Weight</th>
+                </tr>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <div class="col-sm-4">
+        <form method="post" id="initial-population">
+            <label for="population_size">Population Size: </label>
+            <input type="number" name="population_size" class="input-02" value="50" required>
+            <label for="knapsack_threshold">Threshold: </label>
+            <input type="number" name="threshold" class="input-02" value="350">
+            <input type="submit" value="Create initial population">
+        </form>
+        <h3 class="text-center">Population</h3>
+        <div style="
+position: relative;
+height: 600px;
+overflow: auto;
+">
+            <table class="table table-bordered table-striped" id="populationTable">
+                <tr>
+                    <th>ID</th>
+                    <th>Population</th>
+                </tr>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <div class="col-sm-4">
+        <form action="" method="post" id="start">
+            <div>
+                <label for="crossover_rate" >Crossover Rate: </label>
+                <input type="text"  class="input-01" name="crossover" value="0.35" placeholder="0.01 - 1.00">
+                <label for="mutation_rate" >Mutation Rate: </label>
+                <input type="text" name="mutation" class="input-01" value="0.01" placeholder="0.01 - 1.00">
+            </div>
+            <div>   
+                <label for="interaction">Max interaction: </label>
+                <input type="number" class="input-02" name="interaction" value="100">
+          
+            <div>
+                <span>Method selection:</span>
+                <input type="radio" name="method" value="1" checked>
+                <label for="">Rank Selection</label>
+                <input type="radio" name="method" value="2">
+                <label for="">Roulette wheel selection</label>
+            </div>
+                
+                <input type="submit" value="Start">
+            </div>
+            
+        </form>
+        <h3 class="text-center">Last Population</h3>
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th style="
+                    width: 30%;
+                ">Selected Items</th>
+                <td ><p id="selected_items"></p></td>
+                
+                
+            </tr>
+            <tr>
+                <th style="
+                    width: 30%;
+                ">Value</th>
+                <td ><p id="value_items"></p></td>
+            </tr>
+            <tr>
+                <th style="
+                    width: 30%;
+                ">Weight</th>
+                <td ><p id="weight_items"></p></td>
+            </tr>
+        </table>
+        <div style="
+position: relative;
+height: 300px;
+overflow: auto;
+">
+            <table class="table table-bordered table-striped" id="LastPopulation">
+                <tr>
+                    <th>ID</th>
+                    <th>Gen</th>
+                    <th>Value</th>
+                    <th>Weight</th>
+                </tr>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        $("#create-data").submit(function (event) {
+            var formData = {
+                number_items: $('input[name="number_items"]').val(),
+                max_weight: $('input[name="max_weight"]').val(),
+                min_weight: $('input[name="min_weight"]').val(),
+                max_value: $('input[name="max_value"]').val(),
+                min_value: $('input[name="min_value"]').val(),
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/input-data",
+                data: formData,
+
+            }).done(function (data) {
+                renderTable(data)
+            });
+
+            event.preventDefault();
+        });
+        $("#initial-population").submit(function (event) {
+            var formData = {
+                population_size: $('input[name="population_size"]').val(),
+                threshold: $('input[name="threshold"]').val(),
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/create-initial-population",
+                data: formData,
+
+            }).done(function (data) {
+                renderPopulation(data)
+            });
+
+            event.preventDefault();
+        });
+        $("#start").submit(function (event) {
+            var formData = {
+                crossover: $('input[name="crossover"]').val(),
+                mutation: $('input[name="mutation"]').val(),
+                interaction: $('input[name="interaction"]').val(),
+                method: $('input[name=method]:checked', '#start').val()
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/start",
+                data: formData,
+
+            }).done(function (data) {
+                renderLastPopulation(data);
+            });
+
+            event.preventDefault();
+        });
+    });
+    function renderPopulation(data) {
+        var population = "";
+        $("#populationTable").find("tr:gt(0)").remove();
+        $.each(data, function (key, value) {
+            population += '<tr>';
+            population += '<td>' + key + '</td>'
+            population += '<td>' + value + '</td>'
+            population += '</tr>'
+        });
+        $('#populationTable').append(population);
+    }
+    function renderTable(data) {
+        var item_data = "";
+
+        $("#itemTable").find("tr:gt(0)").remove();
+        $.each(data, function (key, value) {
+            item_data += '<tr>';
+            item_data += '<td>' + value.id + '</td>';
+            item_data += '<td>' + value.value + '</td>';
+            item_data += '<td>' + value.weight + '</td>';
+            item_data += '</tr>';
+        });
+        $('#itemTable').append(item_data);
+    }
+    function renderLastPopulation(data) {
+        var item_data = "";
+
+        $("#LastPopulation").find("tr:gt(0)").remove();
+        $.each(data.last_population, function (key, value) {
+            item_data += '<tr>';
+            item_data += '<td>' + key + '</td>';
+            item_data += '<td>' + value.gen + '</td>';
+            item_data += '<td>' + value.fitness + '</td>';
+            item_data += '<td>' + value.weight + '</td>';
+            item_data += '</tr>';
+        });
+        $('#LastPopulation').append(item_data);
+        console.log(data.parameter.selected_items);
+        $('#selected_items').text(data.parameter.selected_items);
+        $('#value_items').text(data.parameter.value);
+        $('#weight_items').text(data.parameter.weight);
+    }
+</script>
+{% endblock %}
