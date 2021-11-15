@@ -8,7 +8,7 @@ git clone https://github.com/tuyen1601/knapsackGA.git
 ## Create Vitual Environment
 
 ```Shell
-cd knapsackGA
+cd GAforKnapsack
 python -m venv GA_venv
 .\GA_venv\Scripts\activate
 ```
